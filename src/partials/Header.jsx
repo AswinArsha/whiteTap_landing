@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Logo from '../images/logo-removebg-preview.png';
 
 function Header() {
 
@@ -23,25 +24,16 @@ function Header() {
           <div className="flex-shrink-0 mr-4">
             {/* Logo */}
             <Link to="/" className="block" aria-label="Cruip">
-              <svg className="w-8 h-8" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <radialGradient cx="21.152%" cy="86.063%" fx="21.152%" fy="86.063%" r="79.941%" id="header-logo">
-                    <stop stopColor="#4FD1C5" offset="0%" />
-                    <stop stopColor="#81E6D9" offset="25.871%" />
-                    <stop stopColor="#338CF5" offset="100%" />
-                  </radialGradient>
-                </defs>
-                <rect width="32" height="32" rx="16" fill="url(#header-logo)" fillRule="nonzero" />
-              </svg>
-            </Link>
+  <img className="md:w-3/6 w-32 " src={Logo} alt="Logo" />
+</Link>
           </div>
 
           {/* Site navigation */}
           <nav className="flex flex-grow">
             <ul className="flex flex-grow justify-end flex-wrap items-center">
-              <li>
+              {/* <li>
                 <Link to="/signin" className="font-medium text-gray-600 hover:text-gray-900 px-5 py-3 flex items-center transition duration-150 ease-in-out">Sign in</Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="/signup" className="btn-sm text-gray-200 bg-gray-900 hover:bg-gray-800 ml-3">
                   <span>Sign up</span>
