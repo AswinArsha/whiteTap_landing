@@ -1,11 +1,7 @@
 // src/pages/userwidgets/UserEditFormComponent.jsx
 import React from "react";
 
-const UserEditFormComponent = ({
-  editedFormData,
-  setEditedFormData,
-  isEditing,
-}) => (
+const UserEditFormComponent = ({ editedFormData, setEditedFormData, isEditing }) => (
   <div className="mt-8">
     <h3 className="text-lg font-bold mb-2">Edit Your Details:</h3>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -158,7 +154,7 @@ const UserEditFormComponent = ({
                 linkedin: e.target.value,
               })
             }
-            disabled ={!isEditing}
+            disabled={!isEditing}
             className="border rounded px-2 py-1 w-full"
           />
         </p>
@@ -173,22 +169,7 @@ const UserEditFormComponent = ({
                 google_reviews: e.target.value,
               })
             }
-            disabled ={!isEditing}
-            className="border rounded px-2 py-1 w-full"
-          />
-        </p>
-        <p>
-          Paytm:
-          <input
-            type="text"
-            value={editedFormData.paytm}
-            onChange={(e) =>
-              setEditedFormData({
-                ...editedFormData,
-                paytm: e.target.value,
-              })
-            }
-            disabled ={!isEditing}
+            disabled={!isEditing}
             className="border rounded px-2 py-1 w-full"
           />
         </p>
@@ -203,7 +184,7 @@ const UserEditFormComponent = ({
                 email: e.target.value,
               })
             }
-            disabled ={!isEditing}
+            disabled={!isEditing}
             className="border rounded px-2 py-1 w-full"
           />
         </p>
@@ -218,7 +199,52 @@ const UserEditFormComponent = ({
                 maps: e.target.value,
               })
             }
-            disabled ={!isEditing}
+            disabled={!isEditing}
+            className="border rounded px-2 py-1 w-full"
+          />
+        </p>
+        <p>
+          Background Image:
+          <input
+            type="text"
+            value={editedFormData.background_image}
+            onChange={(e) =>
+              setEditedFormData({
+                ...editedFormData,
+                background_image: e.target.value,
+              })
+            }
+            disabled={!isEditing}
+            className="border rounded px-2 py-1 w-full"
+          />
+        </p>
+        <p>
+          Card Background Image:
+          <input
+            type="text"
+            value={editedFormData.card_background_image}
+            onChange={(e) =>
+              setEditedFormData({
+                ...editedFormData,
+                card_background_image: e.target.value,
+              })
+            }
+            disabled={!isEditing}
+            className="border rounded px-2 py-1 w-full"
+          />
+        </p>
+        <p>
+          Avatar:
+          <input
+            type="text"
+            value={editedFormData.avatar}
+            onChange={(e) =>
+              setEditedFormData({
+                ...editedFormData,
+                avatar: e.target.value,
+              })
+            }
+            disabled={!isEditing}
             className="border rounded px-2 py-1 w-full"
           />
         </p>

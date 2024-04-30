@@ -4,7 +4,7 @@ import AddUser from "./adminwidgets/AddUser";
 import EditUser from "./adminwidgets/EditUser";
 import ListUser from "./adminwidgets/ListUser";
 import ViewUserQR from "./adminwidgets/ViewUserQR";
-import ViewUserInsights from "./adminwidgets/ViewUserInsights"; // Import the new component
+import ViewUserInsights from "./adminwidgets/ViewUserInsights";
 
 function AdminHome() {
   const [loading, setLoading] = useState(true);
@@ -15,9 +15,9 @@ function AdminHome() {
   const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
   const [isViewQRModalOpen, setIsViewQRModalOpen] = useState(false);
   const [selectedUserIdForQR, setSelectedUserIdForQR] = useState(null);
-  const [isViewUserInsightsOpen, setIsViewUserInsightsOpen] = useState(false); // New state
+  const [isViewUserInsightsOpen, setIsViewUserInsightsOpen] = useState(false);
   const [selectedUserIdForInsights, setSelectedUserIdForInsights] =
-    useState(null); // New state for selected user insights
+    useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -37,9 +37,8 @@ function AdminHome() {
       }
     };
 
-    fetchUsers();
+    fetchUsers(); // Fetch initial users
 
-    // Realtime listener for updates in the "social_media_data" table
     const subscription = supabase
       .channel("realtime:public:social_media_data")
       .on(
@@ -49,7 +48,7 @@ function AdminHome() {
           if (payload.eventType === "INSERT") {
             setUsers((prevUsers) => [...prevUsers, payload.new]);
           } else if (payload.eventType === "UPDATE") {
-            setUsers(
+            setUsers((prevUsers) =>
               prevUsers.map((user) =>
                 user.id === payload.new.id ? payload.new : user
               )
@@ -64,7 +63,7 @@ function AdminHome() {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      subscription.unsubscribe(); // Clean up on unmount
     };
   }, []);
 
@@ -76,7 +75,7 @@ function AdminHome() {
       if (error) {
         setError("Error adding user");
       } else {
-        setIsAddUserModalOpen(false); // Close the add modal on success
+        setIsAddUserModalOpen(false); // Close the modal on success
       }
     } catch (err) {
       console.error("Error adding user:", err);
@@ -138,17 +137,17 @@ function AdminHome() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-100">
       <header className="bg-gray-800 text-white py-4">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold">Admin Home</h1>
+          <h1 className="text-3xl font-bold">Admin Home</h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <h2 className="text-xl font-bold">User Management</h2>
+      <main className="container mx-auto px-4 py-8 bg-white shadow-lg rounded">
+        <h2 className="text-2xl font-bold mb-4">User Management</h2>
 
-        <div className="flex space-x-4">
+        <div className="flex justify-between mb-6">
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onClick={() => setIsAddUserModalOpen(true)}
@@ -183,7 +182,7 @@ function AdminHome() {
         <ViewUserInsights
           isOpen={isViewUserInsightsOpen}
           setIsOpen={setIsViewUserInsightsOpen}
-          userId={selectedUserIdForInsights} // Pass the selected user ID
+          userId={selectedUserIdForInsights}
         />
 
         <ListUser

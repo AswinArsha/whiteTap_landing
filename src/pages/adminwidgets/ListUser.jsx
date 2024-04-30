@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import supabase from "../../supabase";
 
 function ListUser({
   users,
@@ -9,56 +10,101 @@ function ListUser({
   setIsViewUserInsightsOpen,
   setSelectedUserIdForInsights,
 }) {
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  useEffect(() => {
+    const fetchTotalUsers = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("social_media_data")
+          .select("*", { count: "exact" });
+        if (error) {
+          console.error("Error fetching total users:", error);
+        } else {
+          setTotalUsers(count);
+        }
+      } catch (error) {
+        console.error("An error occurred while fetching total users:", error);
+      }
+    };
+
+    fetchTotalUsers(); // Fetch total users on component mount
+  }, []); // Run only once when the component is mounted
+
   return (
-    <div>
-      <h4 className="text-md font-bold mb-2">Current Users:</h4>
-      <ul>
-        {users.map((user) => (
-          <li key={user.id} className="flex items-center mb-2">
-            <div className="mr-4">
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-8 h-8 rounded-full"
-              />
-            </div>
-            <div>
-              <p>{user.name}</p>
-              <p className="text-gray-500">{user.designation}</p>
-            </div>
-            <button
-              className="ml-auto bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-              onClick={() => handleDeleteUser(user.id)}
-            >
-              Delete
-            </button>
-            <button
-              className="ml-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              onClick={() => handleViewQR(user.id)}
-            >
-              View QR
-            </button>
-            <button
-              className="ml-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-              onClick={() => {
-                setSelectedUserForEdit(user);
-                setIsEditUserModalOpen(true);
-              }}
-            >
-              Edit
-            </button>
-            <button
-              className="ml-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
-              onClick={() => {
-                setSelectedUserIdForInsights(user.id);
-                setIsViewUserInsightsOpen(true);
-              }}
-            >
-              View Insights
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div className="text-gray-900 p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="text-3xl">Current Users:</h4>
+        <span className="text-lg text-gray-700">
+          <strong>Total Users:</strong> {totalUsers}
+        </span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-md bg-white shadow-md rounded mb-4">
+          <thead>
+            <tr className="border-b bg-gray-100">
+              <th className="text-left p-3 px-5">Name</th>
+              <th className="text-left p-3 px-5">Designation</th>
+              <th className="text-left p-3 px-5">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr
+                key={user.id}
+                className="border-b hover:bg-orange-100 bg-gray-100"
+              >
+                <td className="p-3 px-5 flex items-center">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                  {user.name}
+                </td>
+                <td className="p-3 px-5">{user.designation}</td>
+                <td className="p-3 px-5 flex justify-end">
+                  <button
+                    type="button"
+                    className="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline mr-2"
+                    onClick={() => {
+                      setSelectedUserForEdit(user);
+                      setIsEditUserModalOpen(true);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline mr-2"
+                    onClick={() => handleViewQR(user.id)}
+                  >
+                    View QR
+                  </button>
+                  <button
+                    type="button"
+                    className="text-sm bg-yellow-500 hover:bg-yellow-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline mr-2"
+                    onClick={() => {
+                      setSelectedUserIdForInsights(user.id);
+                      setIsViewUserInsightsOpen(true);
+                    }}
+                  >
+                    View Insights
+                  </button>
+                  <button
+                    type="button"
+                    className="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
