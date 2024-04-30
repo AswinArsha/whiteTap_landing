@@ -22,6 +22,7 @@ function SignUp() {
     maps: "",
     background_image: "",
     password: "",
+    drive_link: "",
   });
 
   const handleChange = (e) => {
@@ -62,6 +63,7 @@ function SignUp() {
           maps: "",
           background_image: "",
           password: "",
+          drive_link: "",
         });
       }
     } catch (err) {
@@ -348,6 +350,24 @@ function SignUp() {
                         onChange={handleChange}
                       />
                     </div>
+                    <div className="w-full sm:w-1/2 px-3">
+                      <label
+                        className="block text-gray-800 text-sm font-medium mb-1"
+                        htmlFor="drive_link" // No leading space in 'drive_link'
+                      >
+                        Drive Link
+                      </label>
+                      <input
+                        id="drive_link" // Corrected
+                        name="drive_link" // Corrected
+                        type="text"
+                        className="form-input w-full text-gray-800"
+                        placeholder="Enter your Drive link" // Improved placeholder
+                        value={formData.drive_link} // Corrected variable reference
+                        onChange={handleChange}
+                      />
+                    </div>
+
                     <div class="w-full sm:w-1/2 px-3">
                       <label
                         class="block text-gray-800 text-sm font-medium mb-1"

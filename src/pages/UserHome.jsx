@@ -1,7 +1,10 @@
-//  src\pages\UserHome.jsx
+// src/pages/UserHome.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import supabase from "../supabase";
+import UserProfileComponent from "./userwidgets/UserProfileComponent";
+import UserEditFormComponent from "./userwidgets/UserEditFormComponent";
+import ViewUserInsights from "./adminwidgets/ViewUserInsights";
 
 function UserHome() {
   const navigate = useNavigate();
@@ -11,6 +14,7 @@ function UserHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isInsightsOpen, setIsInsightsOpen] = useState(false); // Control the insights dialog
   const [editedFormData, setEditedFormData] = useState(userData);
 
   const toggleEditing = () => setIsEditing(!isEditing);
@@ -19,6 +23,10 @@ function UserHome() {
     const userId = userData.id;
     const url = `https://main.d29jfubysskuax.amplifyapp.com/${userId}`;
     window.open(url, "_blank");
+  };
+
+  const handleViewInsights = () => {
+    setIsInsightsOpen(true); // Open the insights dialog
   };
 
   useEffect(() => {
@@ -111,224 +119,39 @@ function UserHome() {
             {isEditing && (
               <button
                 onClick={handleSaveChanges}
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
+                className="bg-green-500 hover/bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
               >
                 Save
               </button>
             )}
             <button
               onClick={handleViewCard}
-              className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+              className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mr-2"
             >
               View Card
             </button>
+            <button
+              onClick={handleViewInsights}
+              className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Insights
+            </button>
           </div>
-          <h3 className="text-lg font-bold mb-2">Your Details:</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p>
-                Name:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.name : userData.name}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      name: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Designation:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing
-                      ? editedFormData.designation
-                      : userData.designation
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      designation: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Phone:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.phone : userData.phone}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      phone: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                WhatsApp:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing ? editedFormData.whatsapp : userData.whatsapp
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      whatsapp: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Website:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.website : userData.website}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      website: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-            </div>
-            <div>
-              <p>
-                Facebook:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing ? editedFormData.facebook : userData.facebook
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      facebook: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Instagram:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing ? editedFormData.instagram : userData.instagram
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      instagram: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                YouTube:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.youtube : userData.youtube}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      youtube: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                LinkedIn:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing ? editedFormData.linkedin : userData.linkedin
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      linkedin: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Google Reviews:{" "}
-                <input
-                  type="text"
-                  value={
-                    isEditing
-                      ? editedFormData.google_reviews
-                      : userData.google_reviews
-                  }
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      google_reviews: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Paytm:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.paytm : userData.paytm}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      paytm: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Email:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.email : userData.email}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      email: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-              <p>
-                Maps:{" "}
-                <input
-                  type="text"
-                  value={isEditing ? editedFormData.maps : userData.maps}
-                  onChange={(e) =>
-                    setEditedFormData({
-                      ...editedFormData,
-                      maps: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                />
-              </p>
-            </div>
-          </div>
+          {isEditing ? (
+            <UserEditFormComponent
+              editedFormData={editedFormData}
+              setEditedFormData={setEditedFormData}
+              isEditing={isEditing}
+            />
+          ) : (
+            <UserProfileComponent userData={userData} />
+          )}
         </div>
+        <ViewUserInsights
+          isOpen={isInsightsOpen}
+          setIsOpen={setIsInsightsOpen}
+          userId={userData.id}
+        />
       </main>
     </div>
   );

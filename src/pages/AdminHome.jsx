@@ -1,106 +1,124 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import supabase from '../supabase';
-import AddUser from './adminwidgets/AddUser';
-import EditUser from './adminwidgets/EditUser';
-import ListUser from './adminwidgets/ListUser';
+import React, { useState, useEffect } from "react";
+import supabase from "../supabase";
+import AddUser from "./adminwidgets/AddUser";
+import EditUser from "./adminwidgets/EditUser";
+import ListUser from "./adminwidgets/ListUser";
+import ViewUserQR from "./adminwidgets/ViewUserQR";
+import ViewUserInsights from "./adminwidgets/ViewUserInsights"; // Import the new component
 
 function AdminHome() {
-  const location = useLocation();
-  const signedInUserEmail = location.state?.signedInUserEmail;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+  const [isViewQRModalOpen, setIsViewQRModalOpen] = useState(false);
+  const [selectedUserIdForQR, setSelectedUserIdForQR] = useState(null);
+  const [isViewUserInsightsOpen, setIsViewUserInsightsOpen] = useState(false); // New state
+  const [selectedUserIdForInsights, setSelectedUserIdForInsights] =
+    useState(null); // New state for selected user insights
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const { data, error } = await supabase.from('social_media_data').select('*');
+        const { data, error } = await supabase
+          .from("social_media_data")
+          .select("*");
         if (error) {
-          setError('Error fetching users');
+          setError("Error fetching users");
         } else {
           setUsers(data);
         }
       } catch (err) {
-        setError('An error occurred. Please try again.');
+        setError("An error occurred. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers(); // Fetch all users when the component mounts
+    fetchUsers();
 
     // Realtime listener for updates in the "social_media_data" table
     const subscription = supabase
-      .channel('realtime:public:social_media_data') // Channel name for real-time updates
+      .channel("realtime:public:social_media_data")
       .on(
-        'postgres_changes', 
-        { event: '*', schema: 'public', table: 'social_media_data' }, 
+        "postgres_changes",
+        { event: "*", schema: "public", table: "social_media_data" },
         (payload) => {
-          // Handle changes based on the event type
-          if (payload.eventType === 'INSERT') {
-            setUsers((prevUsers) => [...prevUsers, payload.new]); // Add new user to the list
-          } else if (payload.eventType === 'UPDATE') {
+          if (payload.eventType === "INSERT") {
+            setUsers((prevUsers) => [...prevUsers, payload.new]);
+          } else if (payload.eventType === "UPDATE") {
+            setUsers(
+              prevUsers.map((user) =>
+                user.id === payload.new.id ? payload.new : user
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
             setUsers((prevUsers) =>
-              prevUsers.map((user) => (user.id === payload.new.id ? payload.new : user))
-            ); // Update the changed user
-          } else if (payload.eventType === 'DELETE') {
-            setUsers((prevUsers) => prevUsers.filter((user) => user.id !== payload.old.id)); // Remove the deleted user
+              prevUsers.filter((user) => user.id !== payload.old.id)
+            );
           }
         }
       )
-      .subscribe(); // Subscribe to the channel
+      .subscribe();
 
     return () => {
-      subscription.unsubscribe(); // Clean up the subscription on component unmount
+      subscription.unsubscribe();
     };
-  }, []); // Empty dependency array to run the effect only once
+  }, []);
 
   const handleAddUser = async (newUser) => {
     try {
-      const { error, data } = await supabase.from('social_media_data').insert([newUser]);
+      const { error } = await supabase
+        .from("social_media_data")
+        .insert([newUser]);
       if (error) {
-        setError('Error adding user');
+        setError("Error adding user");
       } else {
-        const newUserData = data[0]; // Use the first item from the returned data
-        setUsers((prevUsers) => [...prevUsers, newUserData]); // This is optional with real-time setup
-        setIsAddUserModalOpen(false); // Close the AddUser modal
+        setIsAddUserModalOpen(false); // Close the add modal on success
       }
     } catch (err) {
-      setError('An error occurred while adding the user. Please try again.');
+      console.error("Error adding user:", err);
     }
   };
 
   const handleEditUser = async (updatedUserData) => {
     try {
-      const { error } = await supabase.from('social_media_data').update(updatedUserData).eq('id', selectedUserForEdit.id);
-
+      const { error } = await supabase
+        .from("social_media_data")
+        .update(updatedUserData)
+        .eq("id", selectedUserForEdit.id);
       if (error) {
-        setError('Error updating user');
+        setError("Error updating user");
       } else {
-        setIsEditUserModalOpen(false); // Close the EditUser modal
-        setSelectedUserForEdit(null); // Clear the selected user
+        setIsEditUserModalOpen(false);
+        setSelectedUserForEdit(null);
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error("Error updating user:", err);
     }
   };
 
   const handleDeleteUser = async (userId) => {
     try {
-      const { error } = await supabase.from('social_media_data').delete().eq('id', userId);
-
+      const { error } = await supabase
+        .from("social_media_data")
+        .delete()
+        .eq("id", userId);
       if (error) {
-        setError('Error deleting user');
+        setError("Error deleting user");
       } else {
-        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId)); // This is optional with real-time setup
+        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
       }
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      console.error("An error occurred. Please try again.");
     }
+  };
+
+  const handleViewQR = (userId) => {
+    setSelectedUserIdForQR(userId);
+    setIsViewQRModalOpen(true);
   };
 
   if (loading) {
@@ -114,7 +132,7 @@ function AdminHome() {
   if (error) {
     return (
       <div className="flex flex-col min-h-screen justify-center items-center">
-        {error} {/* Display error message */}
+        {error}
       </div>
     );
   }
@@ -129,19 +147,13 @@ function AdminHome() {
 
       <main className="container mx-auto px-4 py-8">
         <h2 className="text-xl font-bold">User Management</h2>
+
         <div className="flex space-x-4">
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onClick={() => setIsAddUserModalOpen(true)}
           >
             Add User
-          </button>
-
-          <button
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => setIsEditUserModalOpen(true)}
-          >
-            Edit User
           </button>
         </div>
 
@@ -153,14 +165,36 @@ function AdminHome() {
 
         {isEditUserModalOpen && (
           <EditUser
+            isOpen={isEditUserModalOpen}
+            setIsOpen={setIsEditUserModalOpen}
             users={users}
             handleEditUser={handleEditUser}
-            setSelectedUserForEdit={setSelectedUserForEdit}
             selectedUserForEdit={selectedUserForEdit}
+            setSelectedUserForEdit={setSelectedUserForEdit}
           />
         )}
 
-        <ListUser users={users} handleDeleteUser={handleDeleteUser} />
+        <ViewUserQR
+          isOpen={isViewQRModalOpen}
+          setIsOpen={setIsViewQRModalOpen}
+          userId={selectedUserIdForQR}
+        />
+
+        <ViewUserInsights
+          isOpen={isViewUserInsightsOpen}
+          setIsOpen={setIsViewUserInsightsOpen}
+          userId={selectedUserIdForInsights} // Pass the selected user ID
+        />
+
+        <ListUser
+          users={users}
+          handleDeleteUser={handleDeleteUser}
+          handleViewQR={handleViewQR}
+          setSelectedUserForEdit={setSelectedUserForEdit}
+          setIsEditUserModalOpen={setIsEditUserModalOpen}
+          setIsViewUserInsightsOpen={setIsViewUserInsightsOpen}
+          setSelectedUserIdForInsights={setSelectedUserIdForInsights}
+        />
       </main>
     </div>
   );
