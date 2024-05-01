@@ -11,6 +11,7 @@ function SignIn() {
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+
     try {
       const { data, error } = await supabase
         .from("social_media_data")
@@ -20,40 +21,42 @@ function SignIn() {
         .single();
 
       if (error) {
-        setError("Invalid email or password");
+        setError("Invalid email or password.");
       } else if (data) {
-        // Sign-in successful
-        if (data.is_admin) {
-          // User is an admin, navigate to AdminHome
-          navigate("/admin-home", { state: { signedInUserEmail: email } });
+        if (!data.is_verified) {
+          setError(
+            "Your account is pending admin approval. Please wait for verification."
+          );
         } else {
-          // Regular user, navigate to UserHome
-          navigate("/user-home", { state: { signedInUserEmail: email } });
+          // Sign-in successful
+          if (data.is_admin) {
+            // User is an admin, navigate to AdminHome
+            navigate("/admin-home", { state: { signedInUserEmail: email } });
+          } else {
+            // Regular user, navigate to UserHome
+            navigate("/user-home", { state: { signedInUserEmail: email } });
+          }
         }
       }
-    } catch (error) {
+    } catch (err) {
       setError("An error occurred. Please try again.");
     }
   };
 
   return (
     <div className="flex flex-col min-h-screen overflow-hidden">
-      {/*  Site header */}
       <Header />
 
-      {/*  Page content */}
       <main className="flex-grow">
         <section className="bg-gradient-to-b from-gray-100 to-white">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="pt-32 pb-12 md:pt-40 md:pb-20">
-              {/* Page header */}
               <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
                 <h1 className="h1">
                   Welcome back. We exist to make networking easier.
                 </h1>
               </div>
 
-              {/* Form */}
               <div className="max-w-sm mx-auto">
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <form onSubmit={handleSignIn}>
@@ -67,7 +70,7 @@ function SignIn() {
                       </label>
                       <input
                         id="email"
-                        type="email"
+                        type=""
                         className="form-input w-full text-gray-800"
                         placeholder="Enter your email address"
                         value={email}
@@ -76,6 +79,7 @@ function SignIn() {
                       />
                     </div>
                   </div>
+
                   <div className="flex flex-wrap -mx-3 mb-4">
                     <div className="w-full px-3">
                       <label
@@ -95,6 +99,7 @@ function SignIn() {
                       />
                     </div>
                   </div>
+
                   <div className="flex flex-wrap -mx-3 mt-6">
                     <div className="w-full px-3">
                       <button
@@ -106,8 +111,9 @@ function SignIn() {
                     </div>
                   </div>
                 </form>
+
                 <div className="text-gray-600 text-center mt-6">
-                  Don't you have an account?{" "}
+                  Don't have an account?{" "}
                   <Link
                     to="/signup"
                     className="text-blue-600 hover:underline transition duration-150 ease-in-out"

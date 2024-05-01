@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import supabase from "../supabase";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import supabase, { supabaseUrl } from "../supabase";
 import Header from "../partials/Header";
 
 function SignUp() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    card_background_image: "",
     avatar: "",
     name: "",
     designation: "",
@@ -23,7 +23,30 @@ function SignUp() {
     background_image: "",
     password: "",
     drive_link: "",
+    is_verified: false, // User is pending admin approval upon sign-up
   });
+
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [backgroundFile, setBackgroundFile] = useState(null);
+
+  const [isSuccessPopupOpen, setIsSuccessPopupOpen] = useState(false);
+  const [redirectDelay, setRedirectDelay] = useState(1); // Countdown for redirect
+
+  useEffect(() => {
+    if (isSuccessPopupOpen) {
+      const countdown = setInterval(() => {
+        setRedirectDelay((prev) => {
+          if (prev === 1) {
+            clearInterval(countdown);
+            navigate("/signin");
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(countdown);
+    }
+  }, [isSuccessPopupOpen, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,44 +56,65 @@ function SignUp() {
     }));
   };
 
+  const handleAvatarChange = (e) => {
+    setAvatarFile(e.target.files[0]);
+  };
+
+  const handleBackgroundChange = (e) => {
+    setBackgroundFile(e.target.files[0]);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-      const { error } = await supabase
-        .from("social_media_data")
-        .insert([formData]);
-
+      // Upload avatar image to Supabase
+      let avatarUrl = null;
+      if (avatarFile) {
+        const { data, error } = await supabase.storage
+          .from("image")
+          .upload(`avatars/${avatarFile.name}`, avatarFile);
+  
+        if (error) {
+          console.error("Error uploading avatar image:", error.message);
+        } else if (data && data.Key) {
+          avatarUrl = `${supabaseUrl}/storage/v1/object/public/${data.Key}`;
+        }
+      }
+  
+      // Upload background image to Supabase
+      let backgroundUrl = null;
+      if (backgroundFile) {
+        const { data, error } = await supabase.storage
+          .from("image")
+          .upload(`backgrounds/${backgroundFile.name}`, backgroundFile);
+  
+        if (error) {
+          console.error("Error uploading background image:", error.message);
+        } else if (data && data.Key) {
+          backgroundUrl = `${supabaseUrl}/storage/v1/object/public/${data.Key}`;
+        }
+      }
+  
+      // Insert data into Supabase
+      const { error } = await supabase.from("social_media_data").insert([
+        {
+          ...formData,
+          avatar: avatarUrl || formData.avatar,
+          background_image: backgroundUrl || formData.background_image,
+        },
+      ]);
+  
       if (error) {
         console.error("Error inserting data into Supabase:", error.message);
       } else {
         console.log("Data inserted successfully");
-        setFormData({
-          card_background_image: "",
-          avatar: "",
-          name: "",
-          designation: "",
-          phone: "",
-          whatsapp: "",
-          website: "",
-          facebook: "",
-          instagram: "",
-          youtube: "",
-          linkedin: "",
-          google_reviews: "",
-          paytm: "",
-          email: "",
-          maps: "",
-          background_image: "",
-          password: "",
-          drive_link: "",
-        });
+        setIsSuccessPopupOpen(true); // Open the success pop-up
       }
     } catch (err) {
       console.error("Error with Supabase:", err);
     }
   };
-
   return (
     <div className="flex flex-col min-h-screen overflow-hidden">
       <Header />
@@ -137,7 +181,7 @@ function SignUp() {
                         id="password"
                         name="password"
                         type="password"
-                        class="form-input w-full text-gray-800"
+                        className="form-input w-full text-gray-800"
                         placeholder="Enter your password"
                         value={formData.password}
                         onChange={handleChange}
@@ -155,14 +199,13 @@ function SignUp() {
                         id="designation"
                         name="designation"
                         type="text"
-                        class="form-input w-full text-gray-800"
+                        className="form-input w-full text-gray-800"
                         placeholder="Enter your designation"
                         value={formData.designation}
                         onChange={handleChange}
                       />
                     </div>
                   </div>
-
                   {/* Contact Information */}
                   <div className="flex flex-wrap -mx-3 mb-4">
                     <div class="w-full sm:w-1/2 px-3">
@@ -367,30 +410,12 @@ function SignUp() {
                         onChange={handleChange}
                       />
                     </div>
-
-                    <div class="w-full sm:w-1/2 px-3">
-                      <label
-                        class="block text-gray-800 text-sm font-medium mb-1"
-                        htmlFor="card_background_image"
-                      >
-                        Card Background Image
-                      </label>
-                      <input
-                        id="card_background_image"
-                        name="card_background_image"
-                        type="text"
-                        class="form-input w-full text-gray-800"
-                        placeholder="Card background image URL"
-                        value={formData.card_background_image}
-                        onChange={handleChange}
-                      />
-                    </div>
                   </div>
 
                   <div class="flex flex-wrap -mx-3 mb-4">
-                    <div class="w-full sm:w-1/2 px-3">
+                    <div className="w-full sm:w-1/2 px-3">
                       <label
-                        class="block text-gray-800 text-sm font-medium mb-1"
+                        className="block text-gray-800 text-sm font-medium mb-1"
                         htmlFor="avatar"
                       >
                         Avatar
@@ -398,37 +423,35 @@ function SignUp() {
                       <input
                         id="avatar"
                         name="avatar"
-                        type="text"
-                        class="form-input w-full text-gray-800"
-                        placeholder="Avatar image URL"
-                        value={formData.avatar}
-                        onChange={handleChange}
+                        type="file"
+                        accept="image/*"
+                        className="form-input w-full text-gray-800"
+                        onChange={handleAvatarChange}
                       />
                     </div>
-                    <div class="w-full sm:w-1/2 px-3">
+                    <div className="w-full sm:w-1/2 px-3">
                       <label
-                        class="block text-gray-800 text-sm font-medium mb-1"
-                        htmlFor="background_image"
+                        className="block text-gray-800 text-sm font-medium mb-1"
+                        htmlFor="card_background_image"
                       >
-                        Background Image
+                        Card Background Image
                       </label>
                       <input
-                        id="background_image"
-                        name="background_image"
-                        type="text"
-                        class="form-input w-full text-gray-800"
-                        placeholder="Background image URL"
-                        value={formData.background_image}
-                        onChange={handleChange}
+                        id="card_background_image"
+                        name="card_background_image"
+                        type="file"
+                        accept="image/*"
+                        className="form-input w-full text-gray-800"
+                        onChange={handleBackgroundChange}
                       />
                     </div>
                   </div>
 
                   {/* Submit Button */}
-                  <div class="flex flex-wrap -mx-3 mt-6">
-                    <div class="w-full px-3">
+                  <div className="flex flex-wrap -mx-3 mt-6">
+                    <div className="w-full px-3">
                       <button
-                        class="btn text-white bg-blue-600 hover:bg-blue-700 w-full"
+                        className="btn text-white bg-blue-600 hover:bg-blue-700 w-full"
                         type="submit"
                       >
                         Sign up
@@ -437,24 +460,24 @@ function SignUp() {
                   </div>
 
                   {/* Terms and Conditions */}
-                  <div class="text-sm text-gray-500 text-center mt-3">
+                  <div className="text-sm text-gray-500 text-center mt-3">
                     By creating an account, you agree to the{" "}
-                    <a class="underline" href="#0">
+                    <a className="underline" href="#0">
                       terms & conditions
-                    </a>
-                    , and our{" "}
-                    <a class="underline" href="#0">
+                    </a>{" "}
+                    and our{" "}
+                    <a className="underline" href="#0">
                       privacy policy
                     </a>
                     .
                   </div>
                 </form>
 
-                <div class="text-gray-600 text-center mt-6">
+                <div className="text-gray-600 text-center mt-6">
                   Already using White Tap?{" "}
                   <Link
                     to="/signin"
-                    class="text-blue-600 hover:underline transition duration-150 ease-in-out"
+                    className="text-blue-600 hover:underline transition duration-150 ease-in-out"
                   >
                     Sign in
                   </Link>
@@ -463,6 +486,32 @@ function SignUp() {
             </div>
           </div>
         </section>
+
+        {isSuccessPopupOpen && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg p-6 shadow-lg text-center">
+              <div className="mb-4 inline-flex justify-center items-center w-16 h-16 rounded-full border-4 border-blue-50 bg-blue-100 text-blue-500">
+                <svg
+                  className="w-6 h-6 animate-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 11-8-8 8 8 0 018 8z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl p-2 font-bold">Sign-Up Successful!</h3>
+              <h3 className="text-sm p-2 font-semibold">
+                Verification pending
+              </h3>
+              <p className="text-gray-500 p-1">
+                Redirecting to Sign-In in {redirectDelay} seconds...
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

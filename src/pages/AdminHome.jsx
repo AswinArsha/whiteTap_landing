@@ -1,3 +1,4 @@
+// src/pages/AdminHome.jsx
 import React, { useState, useEffect } from "react";
 import supabase from "../supabase";
 import AddUser from "./adminwidgets/AddUser";
@@ -5,30 +6,36 @@ import EditUser from "./adminwidgets/EditUser";
 import ListUser from "./adminwidgets/ListUser";
 import ViewUserQR from "./adminwidgets/ViewUserQR";
 import ViewUserInsights from "./adminwidgets/ViewUserInsights";
+import MonthFilter from "./adminwidgets/MonthFilter";
+import PendingUsersList from "./adminwidgets/PendingUsersList";
+import UserDetailsModal from "./adminwidgets/UserDetailsModal";
 
 function AdminHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
   const [isViewQRModalOpen, setIsViewQRModalOpen] = useState(false);
   const [selectedUserIdForQR, setSelectedUserIdForQR] = useState(null);
   const [isViewUserInsightsOpen, setIsViewUserInsightsOpen] = useState(false);
-  const [selectedUserIdForInsights, setSelectedUserIdForInsights] =
-    useState(null);
+  const [selectedUserIdForInsights, setSelectedUserIdForInsights] = useState(null);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
+  const [selectedUserForDetails, setSelectedUserForDetails] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const { data, error } = await supabase
-          .from("social_media_data")
-          .select("*");
+        const { data, error } = await supabase.from("social_media_data").select("*");
         if (error) {
           setError("Error fetching users");
         } else {
           setUsers(data);
+          setFilteredUsers(data.filter((user) => user.is_verified));
+          setPendingUsers(data.filter((user) => !user.is_verified));
         }
       } catch (err) {
         setError("An error occurred. Please try again.");
@@ -37,7 +44,7 @@ function AdminHome() {
       }
     };
 
-    fetchUsers(); // Fetch initial users
+    fetchUsers();
 
     const subscription = supabase
       .channel("realtime:public:social_media_data")
@@ -47,15 +54,34 @@ function AdminHome() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             setUsers((prevUsers) => [...prevUsers, payload.new]);
+            if (!payload.new.is_verified) {
+              setPendingUsers((prevPending) => [...prevPending, payload.new]);
+            } else {
+              setFilteredUsers((prevFiltered) => [...prevFiltered, payload.new]);
+            }
           } else if (payload.eventType === "UPDATE") {
-            setUsers((prevUsers) =>
-              prevUsers.map((user) =>
-                user.id === payload.new.id ? payload.new : user
-              )
+            setUsers(
+              prevUsers.map((user) => (user.id === payload.new.id ? payload.new : user))
             );
+            if (payload.new.is_verified) {
+              setPendingUsers(
+                prevPending.filter((user) => user.id !== payload.new.id)
+              );
+              setFilteredUsers((prevFiltered) => [...prevFiltered, payload.new]);
+            } else {
+              setFilteredUsers(
+                prevFiltered.filter((user) => user.id !== payload.new.id)
+              );
+            }
           } else if (payload.eventType === "DELETE") {
             setUsers((prevUsers) =>
               prevUsers.filter((user) => user.id !== payload.old.id)
+            );
+            setPendingUsers((prevPending) =>
+              prevPending.filter((user) => user.id !== payload.old.id)
+            );
+            setFilteredUsers((prevFiltered) =>
+              prevFiltered.filter((user) => user.id !== payload.old.id)
             );
           }
         }
@@ -63,7 +89,7 @@ function AdminHome() {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe(); // Clean up on unmount
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -75,7 +101,7 @@ function AdminHome() {
       if (error) {
         setError("Error adding user");
       } else {
-        setIsAddUserModalOpen(false); // Close the modal on success
+        setIsAddUserModalOpen(false);
       }
     } catch (err) {
       console.error("Error adding user:", err);
@@ -109,6 +135,9 @@ function AdminHome() {
         setError("Error deleting user");
       } else {
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+        setPendingUsers((prevPending) =>
+          prevPending.filter((user) => user.id !== userId)
+        );
       }
     } catch (err) {
       console.error("An error occurred. Please try again.");
@@ -118,6 +147,30 @@ function AdminHome() {
   const handleViewQR = (userId) => {
     setSelectedUserIdForQR(userId);
     setIsViewQRModalOpen(true);
+  };
+
+  const handleMonthFilterChange = (selectedMonth) => {
+    if (selectedMonth === "") {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter((user) => {
+        const userMonth = new Date(user.created_at).toLocaleString("en-US", {
+          month: "long",
+        });
+        return userMonth === selectedMonth;
+      });
+      setFilteredUsers(filtered);
+    }
+  };
+
+  const handleViewDetails = (user) => {
+    setSelectedUserForDetails(user);
+    setIsUserDetailsModalOpen(true);
+  };
+
+  const handleViewInsights = (userId) => {
+    setSelectedUserIdForInsights(userId);
+    setIsViewUserInsightsOpen(true);
   };
 
   if (loading) {
@@ -147,14 +200,12 @@ function AdminHome() {
       <main className="container mx-auto px-4 py-8 bg-white shadow-lg rounded">
         <h2 className="text-2xl font-bold mb-4">User Management</h2>
 
-        <div className="flex justify-between mb-6">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={() => setIsAddUserModalOpen(true)}
-          >
-            Add User
-          </button>
-        </div>
+        <MonthFilter onMonthChange={handleMonthFilterChange} />
+
+        <PendingUsersList
+          pendingUsers={pendingUsers}
+          onViewDetails={handleViewDetails}
+        />
 
         <AddUser
           isOpen={isAddUserModalOpen}
@@ -179,14 +230,37 @@ function AdminHome() {
           userId={selectedUserIdForQR}
         />
 
-        <ViewUserInsights
-          isOpen={isViewUserInsightsOpen}
-          setIsOpen={setIsViewUserInsightsOpen}
-          userId={selectedUserIdForInsights}
-        />
+        {isUserDetailsModalOpen && selectedUserForDetails && (
+          <UserDetailsModal
+            isOpen={isUserDetailsModalOpen}
+            setIsOpen={setIsUserDetailsModalOpen}
+            user={selectedUserForDetails}
+            onVerify={() => {
+              const updatedUser = {
+                ...selectedUserForDetails,
+                is_verified: true,
+              };
+              supabase
+                .from("social_media_data")
+                .update(updatedUser)
+                .eq("id", selectedUserForDetails.id)
+                .then(() => {
+                  setIsUserDetailsModalOpen(false);
+                });
+            }}
+          />
+        )}
+
+        {isViewUserInsightsOpen && (
+          <ViewUserInsights
+            isOpen={isViewUserInsightsOpen}
+            setIsOpen={setIsViewUserInsightsOpen}
+            userId={selectedUserIdForInsights}
+          />
+        )}
 
         <ListUser
-          users={users}
+          users={filteredUsers}
           handleDeleteUser={handleDeleteUser}
           handleViewQR={handleViewQR}
           setSelectedUserForEdit={setSelectedUserForEdit}
