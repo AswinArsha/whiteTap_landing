@@ -96,18 +96,7 @@ const UserProfileComponent = ({ userData }) => (
               />
             </td>
           </tr>
-          <tr>
-            <td className="p-3 text-lg text-gray-700">
-              Card Background Image:
-            </td>
-            <td className="p-3 text-lg text-gray-700 flex items-center">
-              <img
-                src={userData.card_background_image}
-                alt="Card Background"
-                className="w-16 h-16 rounded"
-              />
-            </td>
-          </tr>
+     
         </tbody>
       </table>
     </div>

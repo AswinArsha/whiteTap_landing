@@ -1,3 +1,4 @@
+// SignUp.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import supabase, { supabaseUrl } from "../supabase";
@@ -55,55 +56,39 @@ function SignUp() {
       [name]: value,
     }));
   };
-
   const handleAvatarChange = (e) => {
-    setAvatarFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prevData) => ({
+          ...prevData,
+          avatar: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
-
+  
   const handleBackgroundChange = (e) => {
-    setBackgroundFile(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prevData) => ({
+          ...prevData,
+          background_image: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
   
     try {
-      // Upload avatar image to Supabase
-      let avatarUrl = null;
-      if (avatarFile) {
-        const { data, error } = await supabase.storage
-          .from("image")
-          .upload(`avatars/${avatarFile.name}`, avatarFile);
-  
-        if (error) {
-          console.error("Error uploading avatar image:", error.message);
-        } else if (data && data.Key) {
-          avatarUrl = `${supabaseUrl}/storage/v1/object/public/${data.Key}`;
-        }
-      }
-  
-      // Upload background image to Supabase
-      let backgroundUrl = null;
-      if (backgroundFile) {
-        const { data, error } = await supabase.storage
-          .from("image")
-          .upload(`backgrounds/${backgroundFile.name}`, backgroundFile);
-  
-        if (error) {
-          console.error("Error uploading background image:", error.message);
-        } else if (data && data.Key) {
-          backgroundUrl = `${supabaseUrl}/storage/v1/object/public/${data.Key}`;
-        }
-      }
-  
-      // Insert data into Supabase
-      const { error } = await supabase.from("social_media_data").insert([
-        {
-          ...formData,
-          avatar: avatarUrl || formData.avatar,
-          background_image: backgroundUrl || formData.background_image,
-        },
-      ]);
+      const { error } = await supabase.from("social_media_data").insert([formData]);
   
       if (error) {
         console.error("Error inserting data into Supabase:", error.message);
